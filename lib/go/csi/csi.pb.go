@@ -6,6 +6,8 @@ package csi
 import (
 	context "context"
 	fmt "fmt"
+	math "math"
+
 	proto "github.com/golang/protobuf/proto"
 	descriptor "github.com/golang/protobuf/protoc-gen-go/descriptor"
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
@@ -13,7 +15,9 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	math "math"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/runtime/protoimpl"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -842,6 +846,304 @@ func (m *ProbeResponse) GetReady() *wrappers.BoolValue {
 		return m.Ready
 	}
 	return nil
+}
+
+// List the deltas between two snapshots on the storage system
+// regardless of how they were created
+type ListSnapshotDeltasRequest struct {
+	// The ID of the base snapshot handle to use for comparison. If
+	// not specified, return all changed blocks up to the target
+	// specified by snapshot_target. This field is OPTIONAL.
+	FromSnapshotId string `protobuf:"bytes,1,opt,name=from_snapshot_id,json=fromSnapshotId,proto3" json:"from_snapshot_id,omitempty"`
+	// The ID of the target snapshot handle to use for comparison. If
+	// not specified, an error is returned. This field is REQUIRED.
+	ToSnapshotId string `protobuf:"bytes,2,opt,name=to_snapshot_id,json=toSnapshotId,proto3" json:"to_snapshot_id,omitempty"`
+	// Secrets required by plugin to complete list snapshot deltas
+	// request.
+	// This field is OPTIONAL. Refer to the `Secrets Requirements`
+	// section on how to use this field.
+	Secrets map[string]string `protobuf:"bytes,3,rep,name=secrets,proto3" json:"secrets,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// If specified (non-zero value), the Plugin MUST NOT return more
+	// entries than this number in the response. If the actual number of
+	// entries is more than this number, the Plugin MUST set `next_token`
+	// in the response which can be used to get the next page of entries
+	// in the subsequent `ListSnapshotDeltas` call. This field is
+	// OPTIONAL. If not specified (zero value), it means there is no
+	// restriction on the number of entries that can be returned.
+	// The value of this field MUST NOT be negative.
+	MaxEntries int32 `protobuf:"varint,4,opt,name=max_entries,json=maxEntries,proto3" json:"max_entries,omitempty"`
+	// A token to specify where to start paginating. Set this field to
+	// `next_token` returned by a previous `ListSnapshotDeltas` call to
+	// get the next page of entries. This field is OPTIONAL.
+	// An empty string is equal to an unspecified field value.
+	StartingToken string `protobuf:"bytes,5,opt,name=starting_token,json=startingToken,proto3" json:"starting_token,omitempty"`
+}
+
+func (x *ListSnapshotDeltasRequest) Reset() {
+	*x = ListSnapshotDeltasRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_csi_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListSnapshotDeltasRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSnapshotDeltasRequest) ProtoMessage() {}
+
+func (x *ListSnapshotDeltasRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_csi_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSnapshotDeltasRequest.ProtoReflect.Descriptor instead.
+func (*ListSnapshotDeltasRequest) Descriptor() ([]byte, []int) {
+	return file_csi_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListSnapshotDeltasRequest) GetFromSnapshotId() string {
+	if x != nil {
+		return x.FromSnapshotId
+	}
+	return ""
+}
+
+func (x *ListSnapshotDeltasRequest) GetToSnapshotId() string {
+	if x != nil {
+		return x.ToSnapshotId
+	}
+	return ""
+}
+
+func (x *ListSnapshotDeltasRequest) GetSecrets() map[string]string {
+	if x != nil {
+		return x.Secrets
+	}
+	return nil
+}
+
+func (x *ListSnapshotDeltasRequest) GetMaxEntries() int32 {
+	if x != nil {
+		return x.MaxEntries
+	}
+	return 0
+}
+
+func (x *ListSnapshotDeltasRequest) GetStartingToken() string {
+	if x != nil {
+		return x.StartingToken
+	}
+	return ""
+}
+
+type ListSnapshotDeltasResponse struct {
+	// The volume size in bytes. This field is OPTIONAL.
+	VolumeSizeBytes uint64 `protobuf:"varint,1,opt,name=volume_size_bytes,json=volumeSizeBytes,proto3" json:"volume_size_bytes,omitempty"`
+	// This token allows you to get the next page of entries for
+	// `ListSnapshotDeltas` request. If the number of entries is larger
+	// than `max_entries`, use the `next_token` as a value for the
+	// `starting_token` field in the next `ListSnapshotDeltas` request.
+	// This field is OPTIONAL.
+	// An empty string is equal to an unspecified field value.
+	NextToken string `protobuf:"bytes,2,opt,name=next_token,json=nextToken,proto3" json:"next_token,omitempty"`
+	// Changed block deltas between the source and target snapshots. An
+	// empty list means there is no difference between the two. Leave
+	// unspecified if the volume isn't of block type. This field is
+	// OPTIONAL.
+	ChangedBlocks []*BlockSnapshotChangedBlock `protobuf:"bytes,3,rep,name=changed_blocks,json=changedBlocks,proto3" json:"changed_blocks,omitempty"`
+}
+
+func (x *ListSnapshotDeltasResponse) Reset() {
+	*x = ListSnapshotDeltasResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_csi_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListSnapshotDeltasResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSnapshotDeltasResponse) ProtoMessage() {}
+
+func (x *ListSnapshotDeltasResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_csi_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSnapshotDeltasResponse.ProtoReflect.Descriptor instead.
+func (*ListSnapshotDeltasResponse) Descriptor() ([]byte, []int) {
+	return file_csi_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ListSnapshotDeltasResponse) GetVolumeSizeBytes() uint64 {
+	if x != nil {
+		return x.VolumeSizeBytes
+	}
+	return 0
+}
+
+func (x *ListSnapshotDeltasResponse) GetNextToken() string {
+	if x != nil {
+		return x.NextToken
+	}
+	return ""
+}
+
+func (x *ListSnapshotDeltasResponse) GetChangedBlocks() []*BlockSnapshotChangedBlock {
+	if x != nil {
+		return x.ChangedBlocks
+	}
+	return nil
+}
+
+type BlockSnapshotChangedBlock struct {
+	// The block logical offset on the volume. This field is REQUIRED.
+	OffsetBytes uint64 `protobuf:"varint,1,opt,name=offset_bytes,json=offsetBytes,proto3" json:"offset_bytes,omitempty"`
+	// The size of the block in bytes. This field is REQUIRED.
+	BlockSizeBytes uint64 `protobuf:"varint,2,opt,name=block_size_bytes,json=blockSizeBytes,proto3" json:"block_size_bytes,omitempty"`
+	// The token and other information needed to retrieve the actual
+	// data block at the given offset. If the provider doesn't support
+	// token-based data blocks retrieval, this should be left
+	// unspecified. This field is OPTIONAL.
+	Token *BlockSnapshotChangedBlockToken `protobuf:"bytes,3,opt,name=token,proto3" json:"token,omitempty"`
+}
+
+func (x *BlockSnapshotChangedBlock) Reset() {
+	*x = BlockSnapshotChangedBlock{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_csi_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BlockSnapshotChangedBlock) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockSnapshotChangedBlock) ProtoMessage() {}
+
+func (x *BlockSnapshotChangedBlock) ProtoReflect() protoreflect.Message {
+	mi := &file_csi_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockSnapshotChangedBlock.ProtoReflect.Descriptor instead.
+func (*BlockSnapshotChangedBlock) Descriptor() ([]byte, []int) {
+	return file_csi_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *BlockSnapshotChangedBlock) GetOffsetBytes() uint64 {
+	if x != nil {
+		return x.OffsetBytes
+	}
+	return 0
+}
+
+func (x *BlockSnapshotChangedBlock) GetBlockSizeBytes() uint64 {
+	if x != nil {
+		return x.BlockSizeBytes
+	}
+	return 0
+}
+
+func (x *BlockSnapshotChangedBlock) GetToken() *BlockSnapshotChangedBlockToken {
+	if x != nil {
+		return x.Token
+	}
+	return nil
+}
+
+type BlockSnapshotChangedBlockToken struct {
+	// The token to use to retrieve the actual data block at the given
+	// offset. This field is REQUIRED.
+	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	// Timestamp when the token is issued. This field is REQUIRED.
+	IssuanceTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=issuance_time,json=issuanceTime,proto3" json:"issuance_time,omitempty"`
+	// The TTL of the token in seconds. The expiry time is calculated by
+	// adding the time of issuance with this value. This field is
+	// REQUIRED.
+	TtlSeconds int32 `protobuf:"varint,3,opt,name=ttl_seconds,json=ttlSeconds,proto3" json:"ttl_seconds,omitempty"`
+}
+
+func (x *BlockSnapshotChangedBlockToken) Reset() {
+	*x = BlockSnapshotChangedBlockToken{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_csi_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BlockSnapshotChangedBlockToken) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockSnapshotChangedBlockToken) ProtoMessage() {}
+
+func (x *BlockSnapshotChangedBlockToken) ProtoReflect() protoreflect.Message {
+	mi := &file_csi_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockSnapshotChangedBlockToken.ProtoReflect.Descriptor instead.
+func (*BlockSnapshotChangedBlockToken) Descriptor() ([]byte, []int) {
+	return file_csi_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *BlockSnapshotChangedBlockToken) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
+func (x *BlockSnapshotChangedBlockToken) GetIssuanceTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.IssuanceTime
+	}
+	return nil
+}
+
+func (x *BlockSnapshotChangedBlockToken) GetTtlSeconds() int32 {
+	if x != nil {
+		return x.TtlSeconds
+	}
+	return 0
 }
 
 type CreateVolumeRequest struct {
